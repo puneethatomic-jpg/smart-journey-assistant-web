@@ -30,6 +30,8 @@ export default function RoutePreferenceSelector({
         return (
           <button
             key={opt.id}
+            type="button"
+            aria-label={`Filter by preference: ${opt.label}`}
             onClick={() => onSelectPreference(opt.id)}
             className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isSelected

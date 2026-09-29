@@ -24,6 +24,8 @@ export default function TravelModeSelector({ selectedMode, onSelectMode }: Trave
         return (
           <button
             key={mode.id}
+            type="button"
+            aria-label={`Select travel mode: ${mode.label}`}
             onClick={() => onSelectMode(mode.id)}
             className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-lg text-xs font-semibold transition-all ${
               isSelected

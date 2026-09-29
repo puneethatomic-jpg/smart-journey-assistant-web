@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Compass, Mail, Lock, ArrowRight } from 'lucide-react';
+import { loginUser } from '@/lib/storage/localStorage';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function LoginPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) return;
+    loginUser(email);
     router.push('/map');
   };
 
@@ -22,8 +25,8 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-sky-500/20">
             <Compass className="w-6 h-6 text-slate-950 font-bold" />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">Welcome Back</h2>
-          <p className="text-xs text-slate-400">Sign in to access saved places & journey history</p>
+          <h2 className="text-2xl font-extrabold tracking-tight">Sign In to Smart Journey</h2>
+          <p className="text-xs text-slate-400">Access live route planning & AI route optimization</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,7 +64,7 @@ export default function LoginPage() {
             type="submit"
             className="w-full bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-transform active:scale-95 text-xs flex items-center justify-center space-x-1"
           >
-            <span>SIGN IN</span>
+            <span>SIGN IN & CONTINUE</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
@@ -69,7 +72,7 @@ export default function LoginPage() {
         <div className="text-center text-xs text-slate-400">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="text-sky-400 hover:underline font-bold">
-            Create Account
+            Register Account
           </Link>
         </div>
       </div>

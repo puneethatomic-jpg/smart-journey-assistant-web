@@ -15,7 +15,7 @@ import { DEMO_PRESET_LOCATIONS, generateDemoRoutes } from '@/lib/routing/demoRou
 import { generateAIExplanation } from '@/lib/ai/explanationGenerator';
 import { getSavedPlaces, saveJourneyToHistory } from '@/lib/storage/localStorage';
 import { LocationPoint, RouteOption, TravelMode, RoutePreference, Journey, SavedPlace } from '@/types';
-import { Search, Compass, Crosshair } from 'lucide-react';
+import { Search, Compass, Crosshair, Sparkles, Car, Filter } from 'lucide-react';
 
 function RoutePlannerContent() {
   const searchParams = useSearchParams();
@@ -51,10 +51,26 @@ function RoutePlannerContent() {
     setSavedPlaces(getSavedPlaces());
   }, []);
 
-  // Handle Preset URL query params
+  // Handle Preset URL query params (e.g. India regional presets)
   useEffect(() => {
     const preset = searchParams.get('preset');
-    if (preset === 'home_station') {
+    if (preset === 'mumbai_pune') {
+      setOrigin(DEMO_PRESET_LOCATIONS.mumbai);
+      setDestination(DEMO_PRESET_LOCATIONS.pune);
+      setDestSearchQuery(DEMO_PRESET_LOCATIONS.pune.name);
+    } else if (preset === 'delhi_agra') {
+      setOrigin(DEMO_PRESET_LOCATIONS.delhi);
+      setDestination(DEMO_PRESET_LOCATIONS.agra);
+      setDestSearchQuery(DEMO_PRESET_LOCATIONS.agra.name);
+    } else if (preset === 'chennai_puducherry') {
+      setOrigin(DEMO_PRESET_LOCATIONS.chennai);
+      setDestination(DEMO_PRESET_LOCATIONS.puducherry);
+      setDestSearchQuery(DEMO_PRESET_LOCATIONS.puducherry.name);
+    } else if (preset === 'bengaluru_mysuru') {
+      setOrigin(DEMO_PRESET_LOCATIONS.bengaluru);
+      setDestination(DEMO_PRESET_LOCATIONS.mysuru);
+      setDestSearchQuery(DEMO_PRESET_LOCATIONS.mysuru.name);
+    } else if (preset === 'home_station') {
       setOrigin(DEMO_PRESET_LOCATIONS.home);
       setDestination(DEMO_PRESET_LOCATIONS.station);
       setDestSearchQuery(DEMO_PRESET_LOCATIONS.station.name);
@@ -103,6 +119,12 @@ function RoutePlannerContent() {
     }
   };
 
+  const handleSelectPresetRoute = (orig: LocationPoint, dest: LocationPoint) => {
+    setOrigin(orig);
+    setDestination(dest);
+    setDestSearchQuery(dest.name);
+  };
+
   const handleSearchDestination = (e: React.FormEvent) => {
     e.preventDefault();
     if (!destSearchQuery.trim()) return;
@@ -116,9 +138,9 @@ function RoutePlannerContent() {
       foundLocation = {
         id: `custom-${Date.now()}`,
         name: destSearchQuery,
-        address: `${destSearchQuery}, City Center`,
-        lat: origin.lat + (Math.random() * 0.04 - 0.02),
-        lng: origin.lng + (Math.random() * 0.04 - 0.02),
+        address: `${destSearchQuery}, India`,
+        lat: origin.lat + (Math.random() * 0.4 - 0.2),
+        lng: origin.lng + (Math.random() * 0.4 - 0.2),
         type: 'custom',
       };
     }
@@ -129,7 +151,7 @@ function RoutePlannerContent() {
   const handleMapClick = (lat: number, lng: number) => {
     const clickedPoint: LocationPoint = {
       id: `map-click-${Date.now()}`,
-      name: `Selected Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+      name: `Selected Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
       lat,
       lng,
       type: 'custom',
@@ -215,9 +237,9 @@ function RoutePlannerContent() {
       const rerouted: RouteOption = {
         ...activeRoute,
         id: `rerouted-${Date.now()}`,
-        name: 'Route A — Dynamic Reroute (Faster Bypass)',
+        name: 'Route A — Dynamic Reroute (Faster Expressway)',
         durationMin: Math.max(2, activeRoute.durationMin - 3),
-        summary: 'Rerouted via Highway Exit 4 to bypass roadblock',
+        summary: 'Rerouted via Bypass Expressway Exit to skip traffic',
         trafficLevel: 'low',
         score: {
           ...activeRoute.score,
@@ -258,116 +280,124 @@ function RoutePlannerContent() {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-950">
-      {/* Sidebar Controls Panel */}
-      <div className="w-full lg:w-[480px] bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-y-auto p-4 space-y-4 shadow-xl z-20 flex-shrink-0">
+      {/* Sidebar Controls Panel - All Options Visible Without Scrolling */}
+      <div className="w-full lg:w-[460px] bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-y-auto p-3.5 space-y-3 shadow-xl z-20 flex-shrink-0">
         {!isNavigating ? (
           <>
-            {/* Header */}
-            <div className="space-y-3">
+            {/* Section 1: Route Plan A to B & Presets */}
+            <div className="space-y-2 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
               <div className="flex items-center justify-between">
-                <h1 className="text-xl font-extrabold text-white tracking-tight flex items-center space-x-2">
-                  <Compass className="w-5 h-5 text-sky-400" />
+                <h1 className="text-sm font-extrabold text-white tracking-tight flex items-center space-x-2">
+                  <Compass className="w-4 h-4 text-sky-400" />
                   <span>Route Planner</span>
                 </h1>
 
                 <button
+                  type="button"
                   onClick={handleUseCurrentLocation}
-                  className="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center space-x-1 font-semibold transition-colors"
+                  className="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 px-2 py-0.5 rounded flex items-center space-x-1 font-semibold transition-colors"
                 >
-                  <Crosshair className="w-3.5 h-3.5" />
-                  <span>GPS Location</span>
+                  <Crosshair className="w-3 h-3" />
+                  <span>Current GPS</span>
                 </button>
               </div>
 
-              {/* Origin Input */}
+              {/* Origin A Input */}
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-xs text-sky-400 font-bold">A</span>
+                <span className="absolute left-2.5 top-2 text-[11px] text-sky-400 font-bold">A</span>
                 <input
                   type="text"
                   readOnly
                   value={origin.name}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none cursor-default"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-7 pr-2 py-1.5 text-xs font-semibold text-slate-200 focus:outline-none cursor-default"
                 />
               </div>
 
-              {/* Destination Form */}
+              {/* Destination B Form */}
               <form onSubmit={handleSearchDestination} className="relative">
-                <span className="absolute left-3 top-2.5 text-xs text-rose-500 font-bold">B</span>
+                <span className="absolute left-2.5 top-2 text-[11px] text-rose-500 font-bold">B</span>
                 <input
                   type="text"
-                  placeholder="Search destination or click map..."
+                  placeholder="Search city / destination in India..."
                   value={destSearchQuery}
                   onChange={(e) => setDestSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-sky-500 rounded-xl pl-8 pr-10 py-2 text-xs font-semibold text-white focus:outline-none transition-colors"
+                  className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 focus:border-sky-500 rounded-lg pl-7 pr-8 py-1.5 text-xs font-semibold text-white focus:outline-none transition-colors"
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 top-1.5 p-1 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg transition-colors"
+                  aria-label="Search destination"
+                  className="absolute right-1.5 top-1 p-1 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded transition-colors"
                 >
-                  <Search className="w-4 h-4" />
+                  <Search className="w-3.5 h-3.5" />
                 </button>
               </form>
 
-              {/* Quick Destination Chips */}
-              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
+              {/* Quick India Route Presets */}
+              <div className="flex items-center space-x-1 overflow-x-auto pb-0.5 text-[11px]">
                 <button
-                  onClick={() => {
-                    setDestination(DEMO_PRESET_LOCATIONS.college);
-                    setDestSearchQuery(DEMO_PRESET_LOCATIONS.college.name);
-                  }}
-                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center space-x-1 whitespace-nowrap transition-colors"
+                  type="button"
+                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.mumbai, DEMO_PRESET_LOCATIONS.pune)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
                 >
-                  <span>🎓 College</span>
+                  🏙️ Mumbai → Pune
                 </button>
-
                 <button
-                  onClick={() => {
-                    setDestination(DEMO_PRESET_LOCATIONS.station);
-                    setDestSearchQuery(DEMO_PRESET_LOCATIONS.station.name);
-                  }}
-                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center space-x-1 whitespace-nowrap transition-colors"
+                  type="button"
+                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.delhi, DEMO_PRESET_LOCATIONS.agra)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
                 >
-                  <span>🚆 Station</span>
+                  🏛️ Delhi → Agra
                 </button>
-
                 <button
-                  onClick={() => {
-                    setDestination(DEMO_PRESET_LOCATIONS.airport);
-                    setDestSearchQuery(DEMO_PRESET_LOCATIONS.airport.name);
-                  }}
-                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center space-x-1 whitespace-nowrap transition-colors"
+                  type="button"
+                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.chennai, DEMO_PRESET_LOCATIONS.puducherry)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
                 >
-                  <span>✈ Airport</span>
+                  🌴 Chennai → Puducherry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.bengaluru, DEMO_PRESET_LOCATIONS.mysuru)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
+                >
+                  🏰 Bengaluru → Mysuru
                 </button>
               </div>
             </div>
 
-            {/* Travel Mode Selector */}
-            <div>
-              <label className="text-xs font-bold text-slate-400 block mb-1.5 uppercase tracking-wider">
-                Select Travel Mode
-              </label>
+            {/* Section 2: Preferred Vehicle Mode */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="flex items-center space-x-1">
+                  <Car className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Vehicle Preference</span>
+                </span>
+              </div>
               <TravelModeSelector selectedMode={travelMode} onSelectMode={setTravelMode} />
             </div>
 
-            {/* Route Preferences */}
-            <div>
-              <label className="text-xs font-bold text-slate-400 block mb-1.5 uppercase tracking-wider">
-                Route Preference Filter
-              </label>
+            {/* Section 3: Route Preference Filter */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <span className="flex items-center space-x-1">
+                  <Filter className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Route Preference Filter</span>
+                </span>
+              </div>
               <RoutePreferenceSelector selectedPreference={preference} onSelectPreference={setPreference} />
             </div>
 
-            {/* AI Explanation Component */}
+            {/* Section 4: AI Route Recommendation Card */}
             {aiExplanation && <AIExplanationCard explanation={aiExplanation} />}
 
-            {/* Calculated Route Options */}
-            <div className="space-y-3">
+            {/* Section 5: Scored Calculated Routes */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Calculated Routes ({routes.length})
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                  <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Calculated Routes ({routes.length})</span>
                 </span>
-                <span className="text-[11px] text-sky-400 font-semibold">Scored & Ranked</span>
+                <span className="text-[10px] text-sky-400 font-semibold bg-sky-500/10 px-2 py-0.5 rounded">Scored & Ranked</span>
               </div>
 
               {routes.map((route) => (
@@ -383,7 +413,7 @@ function RoutePlannerContent() {
           </>
         ) : (
           /* Active Navigation View */
-          <div className="space-y-4">
+          <div className="space-y-3">
             <NavigationOverlay
               currentStep={activeRoute?.steps[journey?.currentStepIndex || 0] || activeRoute?.steps[0]}
               destinationName={destination?.name || 'Destination'}
@@ -413,7 +443,7 @@ function RoutePlannerContent() {
         )}
       </div>
 
-      {/* Main Interactive Map Canvas */}
+      {/* Main Interactive Map Canvas (Covers All India) */}
       <div className="flex-1 h-full min-h-[450px] relative w-full">
         <MapWrapper
           origin={origin}

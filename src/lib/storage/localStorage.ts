@@ -1,10 +1,80 @@
-import { Journey, SavedPlace, UserPreference, TravelMode, RoutePreference } from '@/types';
+import { Journey, SavedPlace, UserPreference, TravelMode, RoutePreference, UserProfile } from '@/types';
 
 const STORAGE_KEYS = {
   SAVED_PLACES: 'sja_saved_places',
   JOURNEY_HISTORY: 'sja_journey_history',
   USER_PREFERENCES: 'sja_user_preferences',
+  CURRENT_USER: 'sja_current_user',
+  USERS_LIST: 'sja_registered_users',
 };
+
+export const DEFAULT_USER: UserProfile = {
+  id: 'usr-demo-101',
+  name: 'Alex Developer',
+  email: 'alex.dev@smartjourney.ai',
+  phone: '+1 (555) 019-2834',
+  createdAt: new Date().toISOString(),
+};
+
+export function getCurrentUser(): UserProfile | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function setCurrentUser(user: UserProfile | null): void {
+  if (typeof window === 'undefined') return;
+  if (!user) {
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+  } else {
+    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+  }
+}
+
+export function logoutUser(): void {
+  setCurrentUser(null);
+}
+
+export function registerUser(name: string, email: string): UserProfile {
+  const newUser: UserProfile = {
+    id: `usr-${Date.now()}`,
+    name,
+    email,
+    createdAt: new Date().toISOString(),
+  };
+  setCurrentUser(newUser);
+
+  // Add to list
+  if (typeof window !== 'undefined') {
+    const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS_LIST) || '[]');
+    localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify([newUser, ...existing]));
+  }
+
+  return newUser;
+}
+
+export function loginUser(email: string): UserProfile {
+  let existingUser: UserProfile | undefined;
+  if (typeof window !== 'undefined') {
+    const list: UserProfile[] = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS_LIST) || '[]');
+    existingUser = list.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  }
+
+  const user = existingUser || {
+    id: `usr-${Date.now()}`,
+    name: email.split('@')[0] || 'User',
+    email,
+    createdAt: new Date().toISOString(),
+  };
+
+  setCurrentUser(user);
+  return user;
+}
 
 export const INITIAL_SAVED_PLACES: SavedPlace[] = [
   {

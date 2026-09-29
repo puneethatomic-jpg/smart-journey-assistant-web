@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Compass, User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { registerUser } from '@/lib/storage/localStorage';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +14,8 @@ export default function RegisterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name || !email) return;
+    registerUser(name, email);
     router.push('/map');
   };
 
@@ -23,8 +26,8 @@ export default function RegisterPage() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-sky-500/20">
             <Compass className="w-6 h-6 text-slate-950 font-bold" />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight">Create Account</h2>
-          <p className="text-xs text-slate-400">Join Smart Journey Assistant</p>
+          <h2 className="text-2xl font-extrabold tracking-tight">Create User Account</h2>
+          <p className="text-xs text-slate-400">Join Smart Journey Assistant to start route planning</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +80,7 @@ export default function RegisterPage() {
             type="submit"
             className="w-full bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-400 hover:to-emerald-400 text-slate-950 font-black py-2.5 rounded-xl shadow-lg transition-transform active:scale-95 text-xs flex items-center justify-center space-x-1"
           >
-            <span>REGISTER ACCOUNT</span>
+            <span>CREATE ACCOUNT & START</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
