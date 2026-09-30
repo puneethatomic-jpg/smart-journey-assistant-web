@@ -141,6 +141,19 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
             <span>{isRegisterMode ? 'COMPLETE REGISTRATION & ENTER WEBSITE' : 'SIGN IN & ENTER WEBSITE'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          <div className="pt-1 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                const u = loginUser('user@smartjourney.ai');
+                setUser(u);
+              }}
+              className="w-full bg-slate-800/70 hover:bg-slate-800 text-sky-400 hover:text-sky-300 border border-slate-700/80 font-bold py-2 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-colors"
+            >
+              <span>⚡ Instant Demo Access (1-Click Enter)</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
