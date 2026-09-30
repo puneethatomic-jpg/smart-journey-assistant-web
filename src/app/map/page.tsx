@@ -278,28 +278,56 @@ function RoutePlannerContent() {
       ? activeRoute.polyline[vehiclePosIndex]
       : null;
 
+  const [filterTag, setFilterTag] = useState<'all' | 'good_road' | 'no_traffic' | 'toll_free'>('all');
+
+  const filteredRoutes = routes.filter((r) => {
+    if (filterTag === 'good_road') return r.roadQuality === 'excellent' || r.roadQuality === 'good';
+    if (filterTag === 'no_traffic') return r.trafficLevel === 'none' || r.trafficLevel === 'low';
+    if (filterTag === 'toll_free') return r.tollCost === 0;
+    return true;
+  });
+
+  const handleSwapLocations = () => {
+    if (!destination) return;
+    const prevOrigin = origin;
+    const prevDest = destination;
+    setOrigin(prevDest);
+    setDestination(prevOrigin);
+    setDestSearchQuery(prevOrigin.name);
+  };
+
   return (
     <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-950">
-      {/* Sidebar Controls Panel - All Options Visible Without Scrolling */}
-      <div className="w-full lg:w-[460px] bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-y-auto p-3.5 space-y-3 shadow-xl z-20 flex-shrink-0">
+      {/* Sidebar Controls Panel */}
+      <div className="w-full lg:w-[470px] bg-slate-900 border-r border-slate-800 flex flex-col h-full overflow-y-auto p-3.5 space-y-3 shadow-xl z-20 flex-shrink-0">
         {!isNavigating ? (
           <>
-            {/* Section 1: Route Plan A to B & Presets */}
+            {/* Step 1: Route Plan A to B & Presets */}
             <div className="space-y-2 bg-slate-950/70 p-3 rounded-xl border border-slate-800">
               <div className="flex items-center justify-between">
-                <h1 className="text-sm font-extrabold text-white tracking-tight flex items-center space-x-2">
-                  <Compass className="w-4 h-4 text-sky-400" />
-                  <span>Route Planner</span>
+                <h1 className="text-xs font-extrabold text-white tracking-tight flex items-center space-x-1.5 uppercase">
+                  <Compass className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Step 1: Set Origin & Destination</span>
                 </h1>
 
-                <button
-                  type="button"
-                  onClick={handleUseCurrentLocation}
-                  className="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 px-2 py-0.5 rounded flex items-center space-x-1 font-semibold transition-colors"
-                >
-                  <Crosshair className="w-3 h-3" />
-                  <span>Current GPS</span>
-                </button>
+                <div className="flex items-center space-x-1">
+                  <button
+                    type="button"
+                    onClick={handleSwapLocations}
+                    title="Reverse Route"
+                    className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-2 py-0.5 rounded font-semibold transition-colors"
+                  >
+                    ⇅ Swap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    className="text-[10px] bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 px-2 py-0.5 rounded flex items-center space-x-1 font-semibold transition-colors"
+                  >
+                    <Crosshair className="w-3 h-3" />
+                    <span>GPS</span>
+                  </button>
+                </div>
               </div>
 
               {/* Origin A Input */}
@@ -350,57 +378,114 @@ function RoutePlannerContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.chennai, DEMO_PRESET_LOCATIONS.puducherry)}
-                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
-                >
-                  🌴 Chennai → Puducherry
-                </button>
-                <button
-                  type="button"
                   onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.bengaluru, DEMO_PRESET_LOCATIONS.mysuru)}
                   className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
                 >
                   🏰 Bengaluru → Mysuru
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectPresetRoute(DEMO_PRESET_LOCATIONS.chennai, DEMO_PRESET_LOCATIONS.puducherry)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-sky-600 text-slate-200 hover:text-white rounded whitespace-nowrap transition-colors"
+                >
+                  🌴 Chennai → Puducherry
+                </button>
               </div>
             </div>
 
-            {/* Section 2: Preferred Vehicle Mode */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-                <span className="flex items-center space-x-1">
+            {/* Step 2: Interactive Prompt - "What vehicle mode do you prefer?" */}
+            <div className="space-y-1.5 bg-slate-950/80 p-3 rounded-xl border border-emerald-500/30">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold text-emerald-400 flex items-center space-x-1.5">
                   <Car className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Vehicle Preference</span>
+                  <span>Step 2: What vehicle mode do you prefer?</span>
+                </span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  Required
                 </span>
               </div>
+              <p className="text-[11px] text-slate-400">
+                Choose your travel mode to customize road quality assessment, speeds, and traffic routes.
+              </p>
               <TravelModeSelector selectedMode={travelMode} onSelectMode={setTravelMode} />
             </div>
 
-            {/* Section 3: Route Preference Filter */}
-            <div className="space-y-1">
+            {/* Route Priority Filter */}
+            <div className="space-y-1 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
               <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <span className="flex items-center space-x-1">
                   <Filter className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Route Preference Filter</span>
+                  <span>Route Priority Preference</span>
                 </span>
               </div>
               <RoutePreferenceSelector selectedPreference={preference} onSelectPreference={setPreference} />
             </div>
 
-            {/* Section 4: AI Route Recommendation Card */}
+            {/* Step 3: AI Route Recommendation Card */}
             {aiExplanation && <AIExplanationCard explanation={aiExplanation} />}
 
-            {/* Section 5: Scored Calculated Routes */}
+            {/* Step 4: All Calculated Routes for Destination */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-1">
                   <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Calculated Routes ({routes.length})</span>
+                  <span>Calculated Routes for Destination ({routes.length})</span>
                 </span>
-                <span className="text-[10px] text-sky-400 font-semibold bg-sky-500/10 px-2 py-0.5 rounded">Scored & Ranked</span>
+                <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                  AI Scored
+                </span>
               </div>
 
-              {routes.map((route) => (
+              {/* Quick Filter Badges */}
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setFilterTag('all')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                    filterTag === 'all'
+                      ? 'bg-sky-500 text-slate-950 font-bold'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  All Routes ({routes.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTag('good_road')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                    filterTag === 'good_road'
+                      ? 'bg-emerald-500 text-slate-950 font-bold'
+                      : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 border border-emerald-500/20'
+                  }`}
+                >
+                  ✨ Good Road
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTag('no_traffic')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                    filterTag === 'no_traffic'
+                      ? 'bg-teal-500 text-slate-950 font-bold'
+                      : 'bg-slate-800 text-teal-300 hover:bg-slate-700 border border-teal-500/20'
+                  }`}
+                >
+                  🟢 No Traffic
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterTag('toll_free')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors ${
+                    filterTag === 'toll_free'
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'bg-slate-800 text-amber-300 hover:bg-slate-700 border border-amber-500/20'
+                  }`}
+                >
+                  💰 Toll-Free
+                </button>
+              </div>
+
+              {/* Render Filtered Routes */}
+              {filteredRoutes.map((route) => (
                 <RouteCard
                   key={route.id}
                   route={route}

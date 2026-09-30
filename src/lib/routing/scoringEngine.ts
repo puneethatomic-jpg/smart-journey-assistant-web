@@ -32,15 +32,25 @@ export function scoreRoutes(
 
     // 3. Traffic Score
     let trafficScore = 100;
-    if (route.trafficLevel === 'moderate') trafficScore = 70;
-    if (route.trafficLevel === 'heavy') trafficScore = 35;
+    if (route.trafficLevel === 'none') trafficScore = 100;
+    else if (route.trafficLevel === 'low') trafficScore = 90;
+    else if (route.trafficLevel === 'moderate') trafficScore = 65;
+    else if (route.trafficLevel === 'heavy') trafficScore = 30;
 
-    // 4. Toll Score
+    // 4. Road Quality Score (0 to 100)
+    const roadQualityScore = route.roadQualityScore || (
+      route.roadQuality === 'excellent' ? 98 :
+      route.roadQuality === 'good' ? 88 :
+      route.roadQuality === 'moderate' ? 70 :
+      route.roadQuality === 'rough' ? 52 : 38
+    );
+
+    // 5. Toll Score
     let tollScore = 100;
-    if (route.tollCost > 0 && route.tollCost <= 50) tollScore = 60;
-    if (route.tollCost > 50) tollScore = 20;
+    if (route.tollCost > 0 && route.tollCost <= 50) tollScore = 65;
+    if (route.tollCost > 50) tollScore = 25;
 
-    // 5. User Preference Match Score
+    // 6. User Preference Match Score
     let preferenceScore = 80;
     switch (userPref) {
       case 'fastest':
@@ -56,38 +66,48 @@ export function scoreRoutes(
         preferenceScore = !route.hasHighways ? 100 : 30;
         break;
       case 'eco':
-        preferenceScore = Math.round((distanceScore * 0.6) + (trafficScore * 0.4));
+        preferenceScore = Math.round((distanceScore * 0.5) + (trafficScore * 0.5));
         break;
       case 'balanced':
       default:
-        preferenceScore = Math.round((timeScore + trafficScore + distanceScore) / 3);
+        preferenceScore = Math.round((timeScore + trafficScore + roadQualityScore) / 3);
         break;
     }
 
     // Adjust weights based on user preference emphasis
     let activeWeights = { ...weights };
     if (userPref === 'fastest') {
-      activeWeights = { time: 0.55, traffic: 0.20, distance: 0.10, toll: 0.05, preference: 0.10 };
+      activeWeights = { time: 0.50, traffic: 0.20, distance: 0.10, toll: 0.05, preference: 0.15 };
     } else if (userPref === 'shortest') {
       activeWeights = { time: 0.15, traffic: 0.10, distance: 0.55, toll: 0.10, preference: 0.10 };
     } else if (userPref === 'avoid_tolls') {
       activeWeights = { time: 0.25, traffic: 0.15, distance: 0.10, toll: 0.40, preference: 0.10 };
+    } else if (userPref === 'eco') {
+      activeWeights = { time: 0.20, traffic: 0.35, distance: 0.25, toll: 0.10, preference: 0.10 };
     }
 
-    // Total Overall Weighted Score (0 to 100)
-    const overallScore = Math.round(
-      timeScore * activeWeights.time +
+    // Total Overall Weighted Score (0 to 100), factoring in road quality (10% weight)
+    const overallScore = Math.min(99, Math.max(20, Math.round(
+      (timeScore * activeWeights.time +
       trafficScore * activeWeights.traffic +
       distanceScore * activeWeights.distance +
       tollScore * activeWeights.toll +
-      preferenceScore * activeWeights.preference
-    );
+      preferenceScore * activeWeights.preference) * 0.90 +
+      roadQualityScore * 0.10
+    )));
 
     // Formulate human breakdown rationale
     const reasoningParts: string[] = [];
+    if (route.trafficLevel === 'none') reasoningParts.push('🟢 No Traffic Area');
+    else if (route.trafficLevel === 'low') reasoningParts.push('🟡 Less Traffic Area');
+    
+    if (route.roadQuality === 'excellent' || route.roadQuality === 'good') {
+      reasoningParts.push('✨ Good Road');
+    } else if (route.roadQuality === 'rough' || route.roadQuality === 'bad') {
+      reasoningParts.push('⚠️ Patchy / Bad Road Warning');
+    }
+
     if (route.durationMin === minTime) reasoningParts.push('Fastest ETA');
-    if (route.distanceKm === minDist) reasoningParts.push('Shortest distance');
-    if (route.trafficLevel === 'low') reasoningParts.push('Smooth traffic');
     if (route.tollCost === 0) reasoningParts.push('Toll-free');
 
     const scoreObj: RouteScore = {
@@ -97,7 +117,7 @@ export function scoreRoutes(
       trafficScore,
       tollScore,
       preferenceScore,
-      reasoning: reasoningParts.join(' • ') || 'Good alternative route',
+      reasoning: reasoningParts.slice(0, 3).join(' • ') || 'Calculated Alternative',
     };
 
     return {

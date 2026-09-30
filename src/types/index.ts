@@ -8,7 +8,9 @@ export type RoutePreference =
   | 'balanced' 
   | 'eco';
 
-export type TrafficLevel = 'low' | 'moderate' | 'heavy';
+export type TrafficLevel = 'none' | 'low' | 'moderate' | 'heavy';
+
+export type RoadQuality = 'excellent' | 'good' | 'moderate' | 'rough' | 'bad';
 
 export interface LocationPoint {
   id?: string;
@@ -43,6 +45,10 @@ export interface RouteOption {
   distanceKm: number;
   durationMin: number;
   trafficLevel: TrafficLevel;
+  trafficZoneLabel: string;
+  roadQuality: RoadQuality;
+  roadQualityLabel: string;
+  roadQualityScore: number; // 0 - 100
   tollCost: number;
   hasHighways: boolean;
   score: RouteScore;
@@ -51,6 +57,7 @@ export interface RouteOption {
   steps: NavigationStep[];
   highlights: string[];
   summary: string;
+  tags?: string[];
 }
 
 export interface Journey {

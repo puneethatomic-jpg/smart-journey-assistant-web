@@ -212,19 +212,31 @@ export default function InteractiveMap({
         {routes.map((route) => {
           const isSelected = route.id === selectedRouteId;
           const isRecommended = route.isRecommended;
+          const isBadRoad = route.roadQuality === 'rough' || route.roadQuality === 'bad';
+          const isNoTraffic = route.trafficLevel === 'none';
 
           let color = '#64748b';
           let weight = 4;
           let opacity = 0.6;
+          let dashArray: string | undefined = undefined;
 
-          if (isSelected) {
-            color = isRecommended ? '#10b981' : '#0284c7';
+          if (isBadRoad) {
+            color = '#f97316'; // Warning Orange for bad road
+            dashArray = '6, 8';
+            weight = isSelected ? 6 : 4;
+            opacity = isSelected ? 0.95 : 0.65;
+          } else if (isRecommended) {
+            color = '#10b981'; // Emerald for AI Recommended
+            weight = isSelected ? 7 : 5;
+            opacity = isSelected ? 0.95 : 0.75;
+          } else if (isNoTraffic) {
+            color = '#06b6d4'; // Cyan for No Traffic
+            weight = isSelected ? 7 : 4;
+            opacity = isSelected ? 0.95 : 0.65;
+          } else if (isSelected) {
+            color = '#0284c7'; // Sky Blue
             weight = 7;
             opacity = 0.95;
-          } else if (isRecommended) {
-            color = '#059669';
-            weight = 5;
-            opacity = 0.7;
           }
 
           return (
@@ -237,23 +249,35 @@ export default function InteractiveMap({
                 opacity,
                 lineCap: 'round',
                 lineJoin: 'round',
-                dashArray: isSelected ? undefined : '8, 8',
+                dashArray: isBadRoad ? '6, 8' : (isSelected ? undefined : '8, 8'),
               }}
               eventHandlers={{
                 click: () => onSelectRoute && onSelectRoute(route.id),
               }}
             >
               <Popup>
-                <div className="p-1">
-                  <div className="font-bold text-slate-900">{route.name}</div>
-                  <div className="text-xs text-slate-600 mt-1">
-                    {route.distanceKm} km • {route.durationMin} mins • {route.trafficLevel} traffic
+                <div className="p-1 min-w-[200px]">
+                  <div className="font-bold text-slate-900 text-sm">{route.name}</div>
+                  <div className="text-xs text-slate-600 mt-1 font-medium">
+                    {route.distanceKm} km • {route.durationMin} mins • {route.tollCost > 0 ? `₹${route.tollCost}` : 'Free'}
                   </div>
-                  {route.isRecommended && (
-                    <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
-                      ⭐ Recommended
+                  
+                  {/* Badges in Popup */}
+                  <div className="flex flex-col gap-1 mt-2 text-[11px]">
+                    {route.isRecommended && (
+                      <span className="inline-block bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                        ⭐ AI Recommended Route
+                      </span>
+                    )}
+                    <span className={`inline-block font-semibold px-1.5 py-0.5 rounded ${
+                      isBadRoad ? 'bg-amber-100 text-amber-900' : 'bg-emerald-50 text-emerald-800'
+                    }`}>
+                      {route.roadQualityLabel}
                     </span>
-                  )}
+                    <span className="inline-block bg-sky-50 text-sky-800 font-semibold px-1.5 py-0.5 rounded">
+                      {route.trafficZoneLabel}
+                    </span>
+                  </div>
                 </div>
               </Popup>
             </Polyline>

@@ -45,10 +45,23 @@ export function generateAIExplanation(
   }
 
   // Traffic comparison
-  if (recommended.trafficLevel === 'low') {
-    bullets.push(`🟢 Enjoys smooth, low-density traffic conditions.`);
+  if (recommended.trafficLevel === 'none') {
+    bullets.push(`🟢 Zero congestion corridor: ${recommended.trafficZoneLabel}.`);
+  } else if (recommended.trafficLevel === 'low') {
+    bullets.push(`🟢 Enjoys smooth, low-density traffic conditions (${recommended.trafficZoneLabel}).`);
   } else if (recommended.trafficLevel === 'moderate') {
-    bullets.push(`🟡 Has moderate traffic flow, overall steady speed.`);
+    bullets.push(`🟡 Moderate traffic flow with steady highway speed.`);
+  }
+
+  // Road Quality analysis
+  if (recommended.roadQuality === 'excellent' || recommended.roadQuality === 'good') {
+    bullets.push(`🛣️ ${recommended.roadQualityLabel} (Smooth surface, safe for all vehicles).`);
+  }
+
+  // Bad road warning for alternative routes
+  const badRoadAlt = otherRoutes.find((r) => r.roadQuality === 'rough' || r.roadQuality === 'bad');
+  if (badRoadAlt) {
+    bullets.push(`⚠️ Avoids ${badRoadAlt.name} which has patchy asphalt and pothole hazards.`);
   }
 
   // Toll comparison
@@ -65,17 +78,17 @@ export function generateAIExplanation(
   } else if (preference === 'fastest') {
     bullets.push(`🚀 Prioritized for minimum overall travel time.`);
   } else if (preference === 'balanced') {
-    bullets.push(`⚖ Best overall balance between travel time, distance, and traffic congestion.`);
+    bullets.push(`⚖ Best overall balance between travel time, road safety, and traffic congestion.`);
   }
 
   const summary = `I recommend ${recommended.name} (${recommended.score.overallScore}/100 score). ` +
     (recommended.id === fastest.id
-      ? `It offers the fastest ETA (${recommended.durationMin} mins) with ${recommended.trafficLevel} traffic.`
-      : `Even though ${fastest.name} is ${fastest.durationMin} mins, ${recommended.name} offers a smoother drive with less traffic delay.`);
+      ? `It offers the fastest ETA (${recommended.durationMin} mins) on a good, smooth road with ${recommended.trafficZoneLabel}.`
+      : `While ${fastest.name} is ${fastest.durationMin} mins, ${recommended.name} provides superior road quality and avoids traffic bottlenecks.`);
 
   return {
     summary,
     bullets,
-    confidence: 94,
+    confidence: 96,
   };
 }
